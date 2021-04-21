@@ -1,6 +1,5 @@
 import { Action, PayloadAction } from "./action";
 import { createActionBuilder } from "./actionBuilder";
-import { BasicStore } from "./basicStore";
 import {
   InferActionCreatorFromAction,
   InferActionCreatorMapFromReducerMap,
@@ -98,39 +97,3 @@ let inferredTypeFromActionReducerCombined: InferTypeFromActionReducer<typeof bui
 // InferActionDispatcherFromReducerMap works
 let inferredActionDispatcherFromReducerMap: InferActionDispatcherFromReducerMap<typeof reducerMapA>;
 let inferredActionDispatcherFromReducerMapCombined: InferActionDispatcherFromReducerMap<typeof combinedReducers>;
-
-interface TestState {
-  color: string;
-  value: number;
-  active: boolean;
-}
-
-const builder = createActionBuilder<TestState>();
-
-const colorActions = {
-  changeColor: builder.createReducer.withPayload<string>((getState, color) => {
-    const state = getState();
-    state.color = color;
-    return state;
-  })
-};
-
-const valueActions = {
-  changeValue: builder.createReducer.withPayload<number>((getState, value) => {
-    const state = getState();
-    state.value = value;
-    return state;
-  })
-};
-
-const defaultState: TestState = {
-  color: "red",
-  value: 10,
-  active: false
-};
-
-const mergedActions = { ...colorActions, ...valueActions };
-
-const testStore = new BasicStore(defaultState, mergedActions);
-
-const { changeColor, changeValue } = testStore.actions;
