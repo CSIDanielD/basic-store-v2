@@ -1,4 +1,4 @@
-import produce, {
+import {
   castImmutable,
   createDraft,
   Draft,

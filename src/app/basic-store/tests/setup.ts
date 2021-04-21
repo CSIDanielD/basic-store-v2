@@ -14,7 +14,7 @@ export interface Inventory {
 }
 
 export interface Purchases {
-  [customerId: number]: Book[];
+  [customerId: number]: { [bookId: number]: number };
 }
 
 export interface TestState {
