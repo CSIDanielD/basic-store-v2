@@ -1,4 +1,4 @@
-import {
+import produce, {
   castImmutable,
   createDraft,
   Draft,
@@ -11,6 +11,7 @@ import { filter, map } from "rxjs/operators";
 import { ActionLike } from "./action";
 import { createActionBuilder } from "./actionBuilder";
 import { ActionWithError } from "./actionWithError";
+import { DispatchOptions } from "./dispatcher";
 import { ReducerMap, ReducerWithoutPayloadWithDispatch } from "./reducer";
 import { Selector } from "./selector";
 import { Transaction } from "./transaction";
@@ -96,14 +97,32 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
    * @param action The action to dispatch. The action's type must match one of the registered reducers.
    * @returns A `Promise` of the resulting `Transaction` from this action's reducer.
    */
-  async dispatch<A extends ActionLike>(action: A): Promise<Transaction<State>> {
+  async dispatch<A extends ActionLike>(
+    action: A,
+    options: DispatchOptions = { skipCommit: false }
+  ): Promise<Transaction<State>> {
     // TODO: Type check could probably be changed to only allow actions that are in _actionReducers
     if (!this._actionReducers[action.type]) {
-      throw new Error(`No action registered with type '${action.type}'!`);
+      const err = new Error(`No action registered with type '${action.type}'!`);
+      return this._createErrorTransaction(err);
     }
 
     // Create a transaction of this action's resulting state change
     const transaction = await this._transactAction(action);
+
+    if (!options.skipCommit) {
+      // Handle updating the state for this transaction.
+      this._commitTransaction(action, transaction);
+    }
+
+    // Return the resulting transaction
+    return transaction;
+  }
+
+  protected _commitTransaction<A extends ActionLike>(
+    action: A,
+    transaction: Transaction<State>
+  ) {
     if (transaction.success) {
       // Update the store's state if no errors were encountered.
       this._state$.next(castImmutable(transaction.result));
@@ -114,9 +133,6 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
       action: action,
       errors: transaction.errors.length > 0 ? transaction.errors : undefined
     });
-
-    // Return the resulting transaction
-    return transaction;
   }
 
   protected async _transactAction<A extends ActionLike>(action: A) {
@@ -201,5 +217,17 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
       stateFn: stateFn,
       actionDispatch: actionDispatch
     };
+  }
+
+  private _createErrorTransaction(error: Error) {
+    const errorTran: Transaction<State> = {
+      result: undefined,
+      changes: [],
+      inverseChanges: [],
+      errors: [error],
+      success: false
+    };
+
+    return errorTran;
   }
 }

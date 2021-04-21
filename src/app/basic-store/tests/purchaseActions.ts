@@ -13,7 +13,6 @@ export const purchaseActions = {
     amount: number;
   }>(async (getState, payload, dispatch) => {
     // First, dispatch an action to remove the
-
     const state = getState();
     return state;
   })
