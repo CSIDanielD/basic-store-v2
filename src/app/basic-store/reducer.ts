@@ -4,23 +4,27 @@ import { StateFn } from "./stateFn";
 
 export type ReducerWithoutPayload<S> = (
   getState: StateFn<Draft<S>>
-) => Draft<S>;
+) => Draft<S> | Promise<Draft<S>>;
 
 export type ReducerWithoutPayloadWithDispatch<
   S,
   AD extends ActionDispatch<any, any>
-> = (getState: StateFn<Draft<S>>, dispatch: AD) => Draft<S>;
+> = (getState: StateFn<Draft<S>>, dispatch: AD) => Draft<S> | Promise<Draft<S>>;
 
 export type ReducerWithPayload<S, P> = (
   getState: StateFn<Draft<S>>,
   payload: P
-) => Draft<S>;
+) => Draft<S> | Promise<Draft<S>>;
 
 export type ReducerWithPayloadWithDispatch<
   S,
   P,
   AD extends ActionDispatch<any, any>
-> = (getState: StateFn<Draft<S>>, payload: P, dispatch: AD) => Draft<S>;
+> = (
+  getState: StateFn<Draft<S>>,
+  payload: P,
+  dispatch: AD
+) => Draft<S> | Promise<Draft<S>>;
 
 export type ReducerLike =
   | ReducerWithoutPayload<any>

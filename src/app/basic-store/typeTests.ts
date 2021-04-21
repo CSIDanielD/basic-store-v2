@@ -47,10 +47,9 @@ const dispatchContext = context.withReducers<typeof reducerMapA>();
 
 const reducerMapB = {
   actionF: dispatchContext.createReducer.withPayload(
-    (getState, payload: { newColor: string }, dispatch) => {
-      const state = getState();
-      state.color = payload.newColor;
-      return state;
+    async (getState, payload: { newColor: string }, dispatch) => {
+      await dispatch.dispatch(dispatch.actions.actionD("blue")); // Dispatch and await another action within this one.
+      return getState();
     }
   ),
   actionG: dispatchContext.createReducer.withoutPayload((getState) =>
