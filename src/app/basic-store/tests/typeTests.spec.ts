@@ -9,7 +9,8 @@ import {
   InferTypeFromActionCreator,
   InferTypeFromActionReducer,
   InferActionDispatcherFromReducerMap,
-  InferStateFromReducer
+  InferStateFromReducer,
+  InferStateFromReducerMap
 } from "../utilityTypes";
 
 const actionA: Action<"Action A"> = { type: "Action A" };
@@ -79,11 +80,14 @@ const builtActionReducerMapCombined = context.createActionReducerMap(
 );
 
 // Injected dispatch works.
-builtActionReducerMapCombined.actionG.reducer = (getState, dispatch) => {
+builtActionReducerMapCombined.actionG.reducer = async (getState, dispatch) => {
   const state = getState();
 
   // Should expect only actionC, actionD, and actionE
   const { actionC, actionD, actionE } = dispatch.actions;
+  const tran = await dispatch.dispatch(actionD);
+  if (!tran.success) {
+  }
   return state;
 };
 
@@ -101,3 +105,7 @@ let inferredActionDispatcherFromReducerMapCombined: InferActionDispatcherFromRed
 
 // InferStateFromReducer works
 let inferredStateFromReducer: InferStateFromReducer<typeof builtActionReducerMapCombined.actionE.reducer>;
+
+// InferStateFromReducerMap works
+let inferredStateFromReducerMapA: InferStateFromReducerMap<typeof reducerMapA>;
+let inferredStateFromReducerMapB: InferStateFromReducerMap<typeof reducerMapB>;

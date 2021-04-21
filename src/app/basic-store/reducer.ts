@@ -8,7 +8,7 @@ export type ReducerWithoutPayload<S> = (
 
 export type ReducerWithoutPayloadWithDispatch<
   S,
-  AD extends ActionDispatch<any>
+  AD extends ActionDispatch<S, any>
 > = (getState: StateFn<Draft<S>>, dispatch: AD) => Draft<S> | Promise<Draft<S>>;
 
 export type ReducerWithPayload<S, P> = (
@@ -19,7 +19,7 @@ export type ReducerWithPayload<S, P> = (
 export type ReducerWithPayloadWithDispatch<
   S,
   P,
-  AD extends ActionDispatch<any>
+  AD extends ActionDispatch<S, any>
 > = (
   getState: StateFn<Draft<S>>,
   payload: P,
@@ -32,7 +32,7 @@ export type ReducerLike =
   | ReducerWithoutPayloadWithDispatch<any, any>
   | ReducerWithPayloadWithDispatch<any, any, any>;
 
-export type ReducerMap<State, P, AD extends ActionDispatch<any>> = {
+export type ReducerMap<State, P, AD extends ActionDispatch<State, any>> = {
   [actionType: string]:
     | ReducerWithoutPayload<State>
     | ReducerWithPayload<State, P>

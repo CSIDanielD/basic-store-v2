@@ -1,11 +1,12 @@
 import { ActionLike } from "./action";
 import { ActionCreatorMap } from "./actionCreator";
+import { Transaction } from "./transaction";
 
-export type Dispatcher<A extends ActionLike> = (
+export type Dispatcher<State, A extends ActionLike> = (
   action: A
-) => void | Promise<void>;
+) => Transaction<State> | Promise<Transaction<State>>;
 
-export type ActionDispatch<M extends ActionCreatorMap<any>> = {
+export type ActionDispatch<State, M extends ActionCreatorMap<any>> = {
   actions: M;
-  dispatch: Dispatcher<any>;
+  dispatch: Dispatcher<State, any>;
 };

@@ -14,6 +14,7 @@ import {
 import { Dispatcher } from "./dispatcher";
 import {
   ReducerLike,
+  ReducerMap,
   ReducerMapLike,
   ReducerWithoutPayload,
   ReducerWithoutPayloadWithDispatch,
@@ -144,9 +145,17 @@ export type InferTypeFromActionCreatorMap<M> = M extends {
     }
   : never;
 
+export type InferStateFromReducerMap<M> = M extends ReducerMap<
+  infer S,
+  any,
+  any
+>
+  ? S
+  : never;
+
 export type InferActionDispatcherFromReducerMap<M> = M extends ReducerMapLike
   ? {
       actions: InferActionCreatorMapFromReducerMap<M>;
-      dispatch: Dispatcher<any>;
+      dispatch: Dispatcher<InferStateFromReducerMap<M>, any>;
     }
   : never;
