@@ -6,15 +6,21 @@ import {
   ReducerLike,
   ReducerMap,
   ReducerWithoutPayload,
-  ReducerWithPayload
+  ReducerWithoutPayloadWithDispatch,
+  ReducerWithPayload,
+  ReducerWithPayloadWithDispatch
 } from "./reducer";
 import {
   InferActionCreatorMapFromReducerMap,
+  InferActionDispatcherFromReducerMap,
   InferActionReducerMapFromReducerMap,
   InferPayloadFromReducer
 } from "./utilityTypes";
 
-export function createActionBuilder<State = any, Reducers = any>() {
+export function createActionBuilder<
+  State = any,
+  Reducers extends ReducerMap<State, any, any> = ReducerMap<State, any, any>
+>() {
   return new ActionBuilder<State, Reducers>();
 }
 
@@ -30,11 +36,22 @@ export class ActionBuilder<State = any, Reducers = any> {
   }
 
   get createReducer() {
-    function withoutPayload(reducer: ReducerWithoutPayload<State>) {
+    function withoutPayload(
+      reducer: ReducerWithoutPayloadWithDispatch<
+        State,
+        InferActionDispatcherFromReducerMap<Reducers>
+      >
+    ) {
       return reducer;
     }
 
-    function withPayload<P>(reducer: ReducerWithPayload<State, P>) {
+    function withPayload<P>(
+      reducer: ReducerWithPayloadWithDispatch<
+        State,
+        P,
+        InferActionDispatcherFromReducerMap<Reducers>
+      >
+    ) {
       return reducer;
     }
 
@@ -62,7 +79,7 @@ export class ActionBuilder<State = any, Reducers = any> {
     };
   }
 
-  createActionCreatorMap<M extends ReducerMap<State, any>>(reducers: M) {
+  createActionCreatorMap<M extends ReducerMap<State, any, any>>(reducers: M) {
     const actionCreators = Object.entries(reducers).reduce((map, entry) => {
       const [actionType, reducer] = entry;
 
@@ -74,7 +91,7 @@ export class ActionBuilder<State = any, Reducers = any> {
     return actionCreators as InferActionCreatorMapFromReducerMap<M>;
   }
 
-  createActionReducerMap<M extends ReducerMap<State, any>>(reducers: M) {
+  createActionReducerMap<M extends ReducerMap<State, any, any>>(reducers: M) {
     const actionReducers = Object.entries(reducers).reduce((map, entry) => {
       const [actionType, reducer] = entry;
 

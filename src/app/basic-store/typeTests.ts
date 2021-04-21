@@ -42,11 +42,20 @@ const reducerMapA = {
     active: boolean;
   }>((getState, payload) => getState())
 };
+
+const dispatchContext = context.withReducers<typeof reducerMapA>();
+
 const reducerMapB = {
-  actionF: context.createReducer.withPayload((getState, testStr: string) =>
-    getState()
+  actionF: dispatchContext.createReducer.withPayload(
+    (getState, payload: { newColor: string }, dispatch) => {
+      const state = getState();
+      state.color = payload.newColor;
+      return state;
+    }
   ),
-  actionG: context.createReducer.withoutPayload((getState) => getState())
+  actionG: dispatchContext.createReducer.withoutPayload((getState) =>
+    getState()
+  )
 };
 
 const combinedReducers = { ...reducerMapA, ...reducerMapB };

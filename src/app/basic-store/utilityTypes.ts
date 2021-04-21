@@ -13,7 +13,9 @@ import { Dispatcher } from "./dispatcher";
 import {
   ReducerMapLike,
   ReducerWithoutPayload,
-  ReducerWithPayload
+  ReducerWithoutPayloadWithDispatch,
+  ReducerWithPayload,
+  ReducerWithPayloadWithDispatch
 } from "./reducer";
 
 //// Type guards ////
@@ -54,10 +56,30 @@ export type InferActionCreatorFromAction<A> = A extends ActionLike
     : never
   : never;
 
+// export type InferActionCreatorMapFromReducerMap<M> = M extends ReducerMapLike
+//   ? {
+//       [K in keyof M]: K extends string
+//         ? M[K] extends ReducerWithoutPayload<infer S>
+//           ? ActionCreatorWithoutPayload<Action<K>>
+//           : M[K] extends ReducerWithPayload<infer S, infer P>
+//           ? ActionCreatorWithPayload<PayloadAction<P, K>>
+//           : never
+//         : never;
+//     }
+//   : never;
+
 export type InferActionCreatorMapFromReducerMap<M> = M extends ReducerMapLike
   ? {
       [K in keyof M]: K extends string
-        ? M[K] extends ReducerWithoutPayload<infer S>
+        ? M[K] extends ReducerWithoutPayloadWithDispatch<infer S, infer AD>
+          ? ActionCreatorWithoutPayload<Action<K>>
+          : M[K] extends ReducerWithPayloadWithDispatch<
+              infer S,
+              infer P,
+              infer AD
+            >
+          ? ActionCreatorWithPayload<PayloadAction<P, K>>
+          : M[K] extends ReducerWithoutPayload<infer S>
           ? ActionCreatorWithoutPayload<Action<K>>
           : M[K] extends ReducerWithPayload<infer S, infer P>
           ? ActionCreatorWithPayload<PayloadAction<P, K>>
