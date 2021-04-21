@@ -56,18 +56,6 @@ export type InferActionCreatorFromAction<A> = A extends ActionLike
     : never
   : never;
 
-// export type InferActionCreatorMapFromReducerMap<M> = M extends ReducerMapLike
-//   ? {
-//       [K in keyof M]: K extends string
-//         ? M[K] extends ReducerWithoutPayload<infer S>
-//           ? ActionCreatorWithoutPayload<Action<K>>
-//           : M[K] extends ReducerWithPayload<infer S, infer P>
-//           ? ActionCreatorWithPayload<PayloadAction<P, K>>
-//           : never
-//         : never;
-//     }
-//   : never;
-
 export type InferActionCreatorMapFromReducerMap<M> = M extends ReducerMapLike
   ? {
       [K in keyof M]: K extends string
@@ -91,7 +79,18 @@ export type InferActionCreatorMapFromReducerMap<M> = M extends ReducerMapLike
 export type InferActionReducerMapFromReducerMap<M> = M extends ReducerMapLike
   ? {
       [K in keyof M]: K extends string
-        ? M[K] extends ReducerWithoutPayload<infer S>
+        ? M[K] extends ReducerWithoutPayloadWithDispatch<infer S, infer AD>
+          ? ActionReducerWithoutPayload<Action<K>, ReducerWithoutPayload<S>>
+          : M[K] extends ReducerWithPayloadWithDispatch<
+              infer S,
+              infer P,
+              infer AD
+            >
+          ? ActionReducerWithPayload<
+              PayloadAction<P, K>,
+              ReducerWithPayload<S, P>
+            >
+          : M[K] extends ReducerWithoutPayload<infer S>
           ? ActionReducerWithoutPayload<Action<K>, ReducerWithoutPayload<S>>
           : M[K] extends ReducerWithPayload<infer S, infer P>
           ? ActionReducerWithPayload<
