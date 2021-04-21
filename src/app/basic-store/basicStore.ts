@@ -3,7 +3,8 @@ import {
   createDraft,
   Draft,
   finishDraft,
-  Immutable
+  Immutable,
+  Patch
 } from "immer";
 import { BehaviorSubject, ReplaySubject } from "rxjs";
 import { filter, map } from "rxjs/operators";
@@ -11,6 +12,7 @@ import { ActionLike } from "./action";
 import { createActionBuilder } from "./actionBuilder";
 import { ReducerMap, ReducerWithoutPayloadWithDispatch } from "./reducer";
 import { Selector } from "./selector";
+import { Transaction } from "./transaction";
 import {
   InferActionCreatorMapFromReducerMap,
   InferActionReducerMapFromReducerMap,
@@ -26,6 +28,20 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
     InferActionCreatorMapFromReducerMap<Reducers>
   >;
   protected _lastAction$ = new ReplaySubject<ActionLike>(1);
+
+  constructor(initialState: State, reducers: Reducers) {
+    const builder = createActionBuilder<State, Reducers>();
+
+    this._state$ = new BehaviorSubject(castImmutable(initialState));
+
+    this._actionReducers = castImmutable(
+      builder.createActionReducerMap(reducers)
+    );
+
+    this._actionCreators = castImmutable(
+      builder.createActionCreatorMap(reducers)
+    );
+  }
 
   /**
    * A convenience object containing every action key mapped to its action creator.
@@ -75,21 +91,97 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
    * Dispatch an action to update the current state. This is the only way to update the store's state value.
    * @param action The action to dispatch. The action's type must match one of the registered reducers.
    */
-  async dispatch<A extends ActionLike>(action: A) {
+  async dispatch<A extends ActionLike>(action: A): Promise<Transaction<State>> {
     // TODO: Type check could probably be changed to only allow actions that are in _actionReducers
-    if (!this._actionReducers.value[action.type]) {
+    if (!this._actionReducers[action.type]) {
       throw new Error(`No action registered with type '${action.type}'!`);
     }
 
-    await this._commitAction(action);
-    this._lastAction$.next(action);
+    // Create a transaction of this action's resulting state change
+    const transaction = await this._transactAction(action);
+    if (transaction.success) {
+      // Update the store's state if no errors were encountered.
+      this._state$.next(castImmutable(transaction.result));
+    }
+
+    // Emit the latest action regardless of success
+
+    // Return the resulting transaction
+    return transaction;
+
+    // await this._commitAction(action);
+    // this._lastAction$.next(action);
   }
 
-  /**
-   * Dispatches the action to its registered reducer and updates the current state with
-   * the reducer's returned value.
-   */
-  protected async _commitAction<A extends ActionLike>(action: A) {
+  protected async _transactAction<A extends ActionLike>(action: A) {
+    const changes: Patch[] = [];
+    const inverseChanges: Patch[] = [];
+    const errors: Error[] = [];
+
+    const reducerPromise = this._createReducerPromise(action, (ex) =>
+      errors.push(ex)
+    );
+
+    const actionResult = await reducerPromise;
+    const resultState = finishDraft(actionResult, (patches, inversePatches) => {
+      changes.push(...patches);
+      inverseChanges.push(...inversePatches);
+    });
+
+    const transaction: Transaction<State> = {
+      result: resultState,
+      changes: changes,
+      inverseChanges: inverseChanges,
+      errors: errors,
+      success: errors && errors.length === 0
+    };
+
+    return transaction;
+  }
+
+  private _createReducerPromise<A extends ActionLike>(
+    action: A,
+    errorHandler: (ex: Error) => void
+  ) {
+    const { reducer, stateFn, actionDispatch } = this._createReducerArgs(
+      action
+    );
+
+    const reducerPromise = new Promise<Draft<State>>(
+      async (resolve, reject) => {
+        if (isPayloadAction(action)) {
+          try {
+            const result = await reducer(
+              stateFn,
+              action.payload,
+              actionDispatch
+            );
+            return resolve(result);
+          } catch (ex) {
+            errorHandler(ex);
+            return reject(ex);
+          }
+        } else {
+          const reducerWithoutPayload = reducer as ReducerWithoutPayloadWithDispatch<
+            State,
+            any
+          >;
+
+          try {
+            const result = await reducerWithoutPayload(stateFn, actionDispatch);
+            return resolve(result);
+          } catch (ex) {
+            errorHandler(ex);
+            return reject(ex);
+          }
+        }
+      }
+    );
+
+    return reducerPromise;
+  }
+
+  private _createReducerArgs<A extends ActionLike>(action: A) {
     const { reducer } = this._actionReducers[action.type];
 
     const stateFn = () => createDraft(this._state$.value as State);
@@ -98,38 +190,44 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
       dispatch: this.dispatch
     };
 
-    const reducerPromise = new Promise<Draft<State>>(
-      async (resolve, reject) => {
-        if (isPayloadAction(action)) {
-          return resolve(
-            await reducer(stateFn, action.payload, actionDispatch)
-          );
-        } else {
-          const reducerWithoutPayload = reducer as ReducerWithoutPayloadWithDispatch<
-            State,
-            any
-          >;
-
-          return resolve(await reducerWithoutPayload(stateFn, actionDispatch));
-        }
-      }
-    );
-
-    const newState = finishDraft(await reducerPromise);
-    this._state$.next(castImmutable(newState));
+    return {
+      reducer: reducer,
+      stateFn: stateFn,
+      actionDispatch: actionDispatch
+    };
   }
 
-  constructor(initialState: State, reducers: Reducers) {
-    const builder = createActionBuilder<State, Reducers>();
+  /**
+   * Dispatches the action to its registered reducer and updates the current state with
+   * the reducer's returned value.
+   */
+  // protected async _commitAction<A extends ActionLike>(action: A) {
+  //   const { reducer } = this._actionReducers[action.type];
 
-    this._state$ = new BehaviorSubject(castImmutable(initialState));
+  //   const stateFn = () => createDraft(this._state$.value as State);
+  //   const actionDispatch = {
+  //     actions: this._actionCreators,
+  //     dispatch: this.dispatch
+  //   };
 
-    this._actionReducers = castImmutable(
-      builder.createActionReducerMap(reducers)
-    );
+  //   const reducerPromise = new Promise<Draft<State>>(
+  //     async (resolve, reject) => {
+  //       if (isPayloadAction(action)) {
+  //         return resolve(
+  //           await reducer(stateFn, action.payload, actionDispatch)
+  //         );
+  //       } else {
+  //         const reducerWithoutPayload = reducer as ReducerWithoutPayloadWithDispatch<
+  //           State,
+  //           any
+  //         >;
 
-    this._actionCreators = castImmutable(
-      builder.createActionCreatorMap(reducers)
-    );
-  }
+  //         return resolve(await reducerWithoutPayload(stateFn, actionDispatch));
+  //       }
+  //     }
+  //   );
+
+  //   const newState = finishDraft(await reducerPromise);
+  //   this._state$.next(castImmutable(newState));
+  // }
 }
