@@ -202,38 +202,4 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
       actionDispatch: actionDispatch
     };
   }
-
-  /**
-   * Dispatches the action to its registered reducer and updates the current state with
-   * the reducer's returned value.
-   */
-  // protected async _commitAction<A extends ActionLike>(action: A) {
-  //   const { reducer } = this._actionReducers[action.type];
-
-  //   const stateFn = () => createDraft(this._state$.value as State);
-  //   const actionDispatch = {
-  //     actions: this._actionCreators,
-  //     dispatch: this.dispatch
-  //   };
-
-  //   const reducerPromise = new Promise<Draft<State>>(
-  //     async (resolve, reject) => {
-  //       if (isPayloadAction(action)) {
-  //         return resolve(
-  //           await reducer(stateFn, action.payload, actionDispatch)
-  //         );
-  //       } else {
-  //         const reducerWithoutPayload = reducer as ReducerWithoutPayloadWithDispatch<
-  //           State,
-  //           any
-  //         >;
-
-  //         return resolve(await reducerWithoutPayload(stateFn, actionDispatch));
-  //       }
-  //     }
-  //   );
-
-  //   const newState = finishDraft(await reducerPromise);
-  //   this._state$.next(castImmutable(newState));
-  // }
 }
