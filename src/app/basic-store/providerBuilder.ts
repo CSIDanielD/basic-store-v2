@@ -18,7 +18,7 @@ import { ReducerMap } from "./reducer";
  *
  * // Elsewhere in code...
  *
- *  const merged = createProviderFrom({...ActionServiceA}).mergeProvider({...ActionServiceB});`
+ *  const merged = new ProviderBuilder({...ActionServiceA}).mergeProvider({...ActionServiceB});`
  * */
 export class ProviderBuilder<Provider extends ReducerMap<any, any, any>> {
   constructor(public provider?: Provider) {}

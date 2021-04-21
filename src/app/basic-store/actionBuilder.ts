@@ -13,16 +13,7 @@ import {
   InferPayloadFromReducer
 } from "./utilityTypes";
 
-export function createActionBuilder<
-  State = any,
-  Reducers extends ReducerMap<State, any, any> = ReducerMap<State, any, any>
->() {
-  return new ActionBuilder<State, Reducers>();
-}
-
 export class ActionBuilder<State = any, Reducers = any> {
-  constructor() {}
-
   withState<NewState>() {
     return new ActionBuilder<State & NewState, Reducers>();
   }
@@ -98,4 +89,11 @@ export class ActionBuilder<State = any, Reducers = any> {
 
     return actionReducers as InferActionReducerMapFromReducerMap<M>;
   }
+}
+
+export function createActionBuilder<
+  State = any,
+  Reducers extends ReducerMap<State, any, any> = ReducerMap<State, any, any>
+>() {
+  return new ActionBuilder<State, Reducers>();
 }

@@ -1,15 +1,15 @@
-import { Action, PayloadAction } from "./action";
-import { createActionBuilder } from "./actionBuilder";
+import { Action, PayloadAction } from "../action";
+import { createActionBuilder } from "../actionBuilder";
 import {
+  InferTypeFromAction,
+  InferPayloadFromPayloadAction,
   InferActionCreatorFromAction,
   InferActionCreatorMapFromReducerMap,
-  InferActionDispatcherFromReducerMap,
   InferActionReducerMapFromReducerMap,
-  InferPayloadFromPayloadAction,
-  InferTypeFromAction,
   InferTypeFromActionCreator,
-  InferTypeFromActionReducer
-} from "./utilityTypes";
+  InferTypeFromActionReducer,
+  InferActionDispatcherFromReducerMap
+} from "../utilityTypes";
 
 const actionA: Action<"Action A"> = { type: "Action A" };
 
