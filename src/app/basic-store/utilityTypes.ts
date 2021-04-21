@@ -9,6 +9,7 @@ import {
   ActionReducerWithoutPayload,
   ActionReducerWithPayload
 } from "./actionReducer";
+import { Dispatcher } from "./dispatcher";
 import {
   ReducerMapLike,
   ReducerWithoutPayload,
@@ -101,5 +102,12 @@ export type InferTypeFromActionCreatorMap<M> = M extends {
 }
   ? {
       [K in keyof M]: InferTypeFromActionCreator<M[K]>;
+    }
+  : never;
+
+export type InferActionDispatcherFromReducerMap<M> = M extends ReducerMapLike
+  ? {
+      actions: InferActionCreatorMapFromReducerMap<M>;
+      dispatch: Dispatcher<any>;
     }
   : never;

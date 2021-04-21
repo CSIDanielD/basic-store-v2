@@ -1,14 +1,13 @@
 import { Action, PayloadAction } from "./action";
 import { createActionBuilder } from "./actionBuilder";
-import { ActionDispatch } from "./dispatcher";
 import {
   InferActionCreatorFromAction,
   InferActionCreatorMapFromReducerMap,
+  InferActionDispatcherFromReducerMap,
   InferActionReducerMapFromReducerMap,
   InferPayloadFromPayloadAction,
   InferTypeFromAction,
   InferTypeFromActionCreator,
-  InferTypeFromActionCreatorMap,
   InferTypeFromActionReducer
 } from "./utilityTypes";
 
@@ -43,18 +42,40 @@ const reducerMapA = {
     active: boolean;
   }>((getState, payload) => getState())
 };
+const reducerMapB = {
+  actionF: context.createReducer.withPayload((getState, testStr: string) =>
+    getState()
+  ),
+  actionG: context.createReducer.withoutPayload((getState) => getState())
+};
+
+const combinedReducers = { ...reducerMapA, ...reducerMapB };
 
 // InferActionCreatorMapFromReducerMap works
 let inferredReducerMapAActionCreators: InferActionCreatorMapFromReducerMap<typeof reducerMapA>;
+let inferredReducerMapAActionCreatorsCombined: InferActionCreatorMapFromReducerMap<typeof combinedReducers>;
 
 // InferActionReducerMapFromReducerMap works
 let inferredReducerMapAActionReducers: InferActionReducerMapFromReducerMap<typeof reducerMapA>;
+let inferredReducerMapAActionReducersCombined: InferActionReducerMapFromReducerMap<typeof combinedReducers>;
 
-const builtActionCreatorMapA = context.createActionCreatorMap(reducerMapA);
-const builtActionReducerMapA = context.createActionReducerMap(reducerMapA);
+const builtActionCreatorMap = context.createActionCreatorMap(reducerMapA);
+const builtActionCreatorMapCombined = context.createActionCreatorMap(
+  combinedReducers
+);
+const builtActionReducerMap = context.createActionReducerMap(reducerMapA);
+const builtActionReducerMapCombined = context.createActionReducerMap(
+  combinedReducers
+);
 
 // InferTypeFromActionCreator works
-let inferredTypeFromActionCreator: InferTypeFromActionCreator<typeof builtActionCreatorMapA.actionC>;
+let inferredTypeFromActionCreator: InferTypeFromActionCreator<typeof builtActionCreatorMap.actionC>;
+let inferredTypeFromActionCreatorCombined: InferTypeFromActionCreator<typeof builtActionCreatorMapCombined.actionC>;
 
 // InferTypeFromActionReducer works
-let inferredTypeFromActionReducer: InferTypeFromActionReducer<typeof builtActionReducerMapA.actionC>;
+let inferredTypeFromActionReducer: InferTypeFromActionReducer<typeof builtActionReducerMap.actionC>;
+let inferredTypeFromActionReducerCombined: InferTypeFromActionReducer<typeof builtActionReducerMapCombined.actionC>;
+
+// InferActionDispatcherFromReducerMap works
+let inferredActionDispatcherFromReducerMap: InferActionDispatcherFromReducerMap<typeof reducerMapA>;
+let inferredActionDispatcherFromReducerMapCombined: InferActionDispatcherFromReducerMap<typeof combinedReducers>;
