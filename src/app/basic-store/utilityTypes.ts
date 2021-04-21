@@ -1,14 +1,15 @@
 import { Action, ActionLike, PayloadAction } from "./action";
 import {
+  ActionCreatorLike,
   ActionCreatorWithoutPayload,
   ActionCreatorWithPayload
 } from "./actionCreator";
 import {
+  ActionReducerLike,
   ActionReducerWithoutPayload,
   ActionReducerWithPayload
 } from "./actionReducer";
 import {
-  ReducerLike,
   ReducerMapLike,
   ReducerWithoutPayload,
   ReducerWithPayload
@@ -76,5 +77,29 @@ export type InferActionReducerMapFromReducerMap<M> = M extends ReducerMapLike
             >
           : never
         : never;
+    }
+  : never;
+
+export type InferTypeFromActionCreator<AC> = AC extends ActionCreatorLike
+  ? AC extends ActionCreatorWithoutPayload<infer A>
+    ? InferTypeFromAction<A>
+    : AC extends ActionCreatorWithPayload<infer A>
+    ? InferTypeFromAction<A>
+    : never
+  : never;
+
+export type InferTypeFromActionReducer<AR> = AR extends ActionReducerLike
+  ? AR extends ActionReducerWithoutPayload<infer A, any>
+    ? InferTypeFromAction<A>
+    : AR extends ActionReducerWithPayload<infer A, any>
+    ? InferTypeFromAction<A>
+    : never
+  : never;
+
+export type InferTypeFromActionCreatorMap<M> = M extends {
+  [K in keyof M]: ActionCreatorLike;
+}
+  ? {
+      [K in keyof M]: InferTypeFromActionCreator<M[K]>;
     }
   : never;

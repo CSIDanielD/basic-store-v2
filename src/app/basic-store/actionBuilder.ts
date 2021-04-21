@@ -1,5 +1,7 @@
 import { ActionLike } from "./action";
+import { ActionCreatorMap } from "./actionCreator";
 import { ActionReducerLike } from "./actionReducer";
+import { ActionDispatch } from "./dispatcher";
 import {
   ReducerLike,
   ReducerMap,
@@ -82,5 +84,11 @@ export class ActionBuilder<State = any, Reducers = any> {
     }, {} as { [actionType: string]: any });
 
     return actionReducers as InferActionReducerMapFromReducerMap<M>;
+  }
+
+  createActionDispatcher<AD extends ActionDispatch<any, any>>(
+    actionDispatch: AD
+  ): AD {
+    return actionDispatch;
   }
 }

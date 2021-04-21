@@ -1,11 +1,15 @@
 import { Action, PayloadAction } from "./action";
 import { createActionBuilder } from "./actionBuilder";
+import { ActionDispatch } from "./dispatcher";
 import {
   InferActionCreatorFromAction,
   InferActionCreatorMapFromReducerMap,
   InferActionReducerMapFromReducerMap,
   InferPayloadFromPayloadAction,
-  InferTypeFromAction
+  InferTypeFromAction,
+  InferTypeFromActionCreator,
+  InferTypeFromActionCreatorMap,
+  InferTypeFromActionReducer
 } from "./utilityTypes";
 
 const actionA: Action<"Action A"> = { type: "Action A" };
@@ -45,3 +49,12 @@ let inferredReducerMapAActionCreators: InferActionCreatorMapFromReducerMap<typeo
 
 // InferActionReducerMapFromReducerMap works
 let inferredReducerMapAActionReducers: InferActionReducerMapFromReducerMap<typeof reducerMapA>;
+
+const builtActionCreatorMapA = context.createActionCreatorMap(reducerMapA);
+const builtActionReducerMapA = context.createActionReducerMap(reducerMapA);
+
+// InferTypeFromActionCreator works
+let inferredTypeFromActionCreator: InferTypeFromActionCreator<typeof builtActionCreatorMapA.actionC>;
+
+// InferTypeFromActionReducer works
+let inferredTypeFromActionReducer: InferTypeFromActionReducer<typeof builtActionReducerMapA.actionC>;

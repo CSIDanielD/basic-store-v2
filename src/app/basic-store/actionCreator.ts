@@ -9,6 +9,10 @@ export type ActionCreatorWithPayload<A extends PayloadAction<any, any>> = (
   payload: InferPayloadFromPayloadAction<A>
 ) => A;
 
+export type ActionCreatorLike =
+  | ActionCreatorWithoutPayload<any>
+  | ActionCreatorWithPayload<any>;
+
 export type ActionCreatorMap<A extends ActionLike> = {
   [actionType: string]: InferActionCreatorFromAction<A>;
 };
