@@ -1,13 +1,10 @@
 import { ActionLike } from "./action";
-import { ActionCreatorMap } from "./actionCreator";
 import { ActionReducerLike } from "./actionReducer";
 import { ActionDispatch } from "./dispatcher";
 import {
   ReducerLike,
   ReducerMap,
-  ReducerWithoutPayload,
   ReducerWithoutPayloadWithDispatch,
-  ReducerWithPayload,
   ReducerWithPayloadWithDispatch
 } from "./reducer";
 import {

@@ -77,6 +77,19 @@ const builtActionReducerMapCombined = context.createActionReducerMap(
   combinedReducers
 );
 
+// Injected dispatch works.
+builtActionReducerMapCombined.actionF.reducer = (
+  getState,
+  payload,
+  dispatch
+) => {
+  const state = getState();
+
+  // Should expect only actionC, actionD, and actionE
+  const { actionC, actionD, actionE } = dispatch.actions;
+  return state;
+};
+
 // InferTypeFromActionCreator works
 let inferredTypeFromActionCreator: InferTypeFromActionCreator<typeof builtActionCreatorMap.actionC>;
 let inferredTypeFromActionCreatorCombined: InferTypeFromActionCreator<typeof builtActionCreatorMapCombined.actionC>;

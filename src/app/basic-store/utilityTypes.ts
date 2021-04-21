@@ -7,7 +7,9 @@ import {
 import {
   ActionReducerLike,
   ActionReducerWithoutPayload,
-  ActionReducerWithPayload
+  ActionReducerWithoutPayloadWithDispatch,
+  ActionReducerWithPayload,
+  ActionReducerWithPayloadWithDispatch
 } from "./actionReducer";
 import { Dispatcher } from "./dispatcher";
 import {
@@ -80,15 +82,18 @@ export type InferActionReducerMapFromReducerMap<M> = M extends ReducerMapLike
   ? {
       [K in keyof M]: K extends string
         ? M[K] extends ReducerWithoutPayloadWithDispatch<infer S, infer AD>
-          ? ActionReducerWithoutPayload<Action<K>, ReducerWithoutPayload<S>>
+          ? ActionReducerWithoutPayloadWithDispatch<
+              Action<K>,
+              ReducerWithoutPayloadWithDispatch<S, AD>
+            >
           : M[K] extends ReducerWithPayloadWithDispatch<
               infer S,
               infer P,
               infer AD
             >
-          ? ActionReducerWithPayload<
+          ? ActionReducerWithPayloadWithDispatch<
               PayloadAction<P, K>,
-              ReducerWithPayload<S, P>
+              ReducerWithPayloadWithDispatch<S, P, AD>
             >
           : M[K] extends ReducerWithoutPayload<infer S>
           ? ActionReducerWithoutPayload<Action<K>, ReducerWithoutPayload<S>>
