@@ -5,10 +5,7 @@ export type Dispatcher<A extends ActionLike> = (
   action: A
 ) => void | Promise<void>;
 
-export type ActionDispatch<
-  A extends ActionLike,
-  M extends ActionCreatorMap<A>
-> = {
+export type ActionDispatch<M extends ActionCreatorMap<any>> = {
   actions: M;
-  dispatch: Dispatcher<A>;
+  dispatch: Dispatcher<any>;
 };

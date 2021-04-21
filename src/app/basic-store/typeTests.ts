@@ -1,5 +1,6 @@
 import { Action, PayloadAction } from "./action";
 import { createActionBuilder } from "./actionBuilder";
+import { BasicStore } from "./basicStore";
 import {
   InferActionCreatorFromAction,
   InferActionCreatorMapFromReducerMap,
@@ -48,7 +49,8 @@ const dispatchContext = context.withReducers<typeof reducerMapA>();
 const reducerMapB = {
   actionF: dispatchContext.createReducer.withPayload(
     async (getState, payload: { newColor: string }, dispatch) => {
-      await dispatch.dispatch(dispatch.actions.actionD("blue")); // Dispatch and await another action within this one.
+      const { actionD } = dispatch.actions;
+      await dispatch.dispatch(actionD(payload.newColor)); // Dispatch and await another action within this one.
       return getState();
     }
   ),
@@ -77,11 +79,7 @@ const builtActionReducerMapCombined = context.createActionReducerMap(
 );
 
 // Injected dispatch works.
-builtActionReducerMapCombined.actionF.reducer = (
-  getState,
-  payload,
-  dispatch
-) => {
+builtActionReducerMapCombined.actionG.reducer = (getState, dispatch) => {
   const state = getState();
 
   // Should expect only actionC, actionD, and actionE
@@ -100,3 +98,39 @@ let inferredTypeFromActionReducerCombined: InferTypeFromActionReducer<typeof bui
 // InferActionDispatcherFromReducerMap works
 let inferredActionDispatcherFromReducerMap: InferActionDispatcherFromReducerMap<typeof reducerMapA>;
 let inferredActionDispatcherFromReducerMapCombined: InferActionDispatcherFromReducerMap<typeof combinedReducers>;
+
+interface TestState {
+  color: string;
+  value: number;
+  active: boolean;
+}
+
+const builder = createActionBuilder<TestState>();
+
+const colorActions = {
+  changeColor: builder.createReducer.withPayload<string>((getState, color) => {
+    const state = getState();
+    state.color = color;
+    return state;
+  })
+};
+
+const valueActions = {
+  changeValue: builder.createReducer.withPayload<number>((getState, value) => {
+    const state = getState();
+    state.value = value;
+    return state;
+  })
+};
+
+const defaultState: TestState = {
+  color: "red",
+  value: 10,
+  active: false
+};
+
+const mergedActions = { ...colorActions, ...valueActions };
+
+const testStore = new BasicStore(defaultState, mergedActions);
+
+const { changeColor, changeValue } = testStore.actions;
