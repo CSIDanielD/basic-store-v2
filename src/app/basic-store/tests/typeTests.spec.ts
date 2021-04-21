@@ -8,7 +8,8 @@ import {
   InferActionReducerMapFromReducerMap,
   InferTypeFromActionCreator,
   InferTypeFromActionReducer,
-  InferActionDispatcherFromReducerMap
+  InferActionDispatcherFromReducerMap,
+  InferStateFromReducer
 } from "../utilityTypes";
 
 const actionA: Action<"Action A"> = { type: "Action A" };
@@ -97,3 +98,6 @@ let inferredTypeFromActionReducerCombined: InferTypeFromActionReducer<typeof bui
 // InferActionDispatcherFromReducerMap works
 let inferredActionDispatcherFromReducerMap: InferActionDispatcherFromReducerMap<typeof reducerMapA>;
 let inferredActionDispatcherFromReducerMapCombined: InferActionDispatcherFromReducerMap<typeof combinedReducers>;
+
+// InferStateFromReducer works
+let inferredStateFromReducer: InferStateFromReducer<typeof builtActionReducerMapCombined.actionE.reducer>;

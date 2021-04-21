@@ -10,6 +10,7 @@ import { BehaviorSubject, ReplaySubject } from "rxjs";
 import { filter, map } from "rxjs/operators";
 import { ActionLike } from "./action";
 import { createActionBuilder } from "./actionBuilder";
+import { ActionWithError } from "./actionWithError";
 import { ReducerMap, ReducerWithoutPayloadWithDispatch } from "./reducer";
 import { Selector } from "./selector";
 import { Transaction } from "./transaction";
@@ -21,13 +22,16 @@ import {
 
 export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
   protected _state$: BehaviorSubject<Immutable<State>>;
+
   protected _actionReducers: Immutable<
     InferActionReducerMapFromReducerMap<Reducers>
   >;
+
   protected _actionCreators: Immutable<
     InferActionCreatorMapFromReducerMap<Reducers>
   >;
-  protected _lastAction$ = new ReplaySubject<ActionLike>(1);
+
+  protected _lastAction$ = new ReplaySubject<ActionWithError<ActionLike>>(1);
 
   constructor(initialState: State, reducers: Reducers) {
     const builder = createActionBuilder<State, Reducers>();
@@ -84,12 +88,13 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
   createActionListener<T extends string>(actionType: T) {
     return this._lastAction$
       .asObservable()
-      .pipe(filter((a) => a.type === actionType));
+      .pipe(filter((a) => a.action.type === actionType));
   }
 
   /**
    * Dispatch an action to update the current state. This is the only way to update the store's state value.
    * @param action The action to dispatch. The action's type must match one of the registered reducers.
+   * @returns A `Promise` of the resulting `Transaction` from this action's reducer.
    */
   async dispatch<A extends ActionLike>(action: A): Promise<Transaction<State>> {
     // TODO: Type check could probably be changed to only allow actions that are in _actionReducers
@@ -105,12 +110,13 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
     }
 
     // Emit the latest action regardless of success
+    this._lastAction$.next({
+      action: action,
+      errors: transaction.errors.length > 0 ? transaction.errors : undefined
+    });
 
     // Return the resulting transaction
     return transaction;
-
-    // await this._commitAction(action);
-    // this._lastAction$.next(action);
   }
 
   protected async _transactAction<A extends ActionLike>(action: A) {

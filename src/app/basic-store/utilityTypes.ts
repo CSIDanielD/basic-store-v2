@@ -13,6 +13,7 @@ import {
 } from "./actionReducer";
 import { Dispatcher } from "./dispatcher";
 import {
+  ReducerLike,
   ReducerMapLike,
   ReducerWithoutPayload,
   ReducerWithoutPayloadWithDispatch,
@@ -41,6 +42,18 @@ export type InferPayloadFromPayloadAction<A> = A extends PayloadAction<
   any
 >
   ? P
+  : never;
+
+export type InferStateFromReducer<R> = R extends ReducerLike
+  ? R extends ReducerWithoutPayload<infer S>
+    ? S
+    : R extends ReducerWithoutPayloadWithDispatch<infer S, any>
+    ? S
+    : R extends ReducerWithPayload<infer S, any>
+    ? S
+    : R extends ReducerWithPayloadWithDispatch<infer S, any, any>
+    ? S
+    : never
   : never;
 
 export type InferPayloadFromReducer<R> = R extends ReducerWithPayload<
