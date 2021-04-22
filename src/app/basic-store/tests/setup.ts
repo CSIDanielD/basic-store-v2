@@ -41,7 +41,14 @@ export function getDefaultState(): TestState {
       { id: 7, name: "Dan" },
       { id: 14, name: "Brandon" }
     ],
-    inventory: {},
+    inventory: {
+      1: 7,
+      2: 2,
+      4: 3,
+      5: 12,
+      7: 9,
+      13: 4
+    },
     purchases: {}
   };
 }

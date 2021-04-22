@@ -1,4 +1,5 @@
 import { enablePatches } from "immer";
+import { sample } from "rxjs/operators";
 import { BasicStore } from "../basicStore";
 import { getTestActions } from "./actions";
 import { getDefaultState, Inventory } from "./setup";
@@ -55,7 +56,9 @@ describe("State selection", () => {
   });
 
   it("can select an observable of the whole state");
+
   it("can select an observable of a single state property");
+
   it("can select an observable of a combination of state properties");
 });
 
@@ -84,10 +87,34 @@ describe("Updating state", () => {
     const { addBook } = store.actions;
     await store.dispatch(addBook({ id: 123, title: "Test Book", price: 10 }));
 
+    const expectedState = getDefaultState();
+    expectedState.books.push({ id: 123, title: "Test Book", price: 10 });
+
     expect(store.select((s) => s)).not.toStrictEqual(getDefaultState());
+    expect(store.select((s) => s)).toStrictEqual(expectedState);
   });
 
-  it("does not update state when reducer errors", async () => {});
+  it("does not update state when reducer errors", async () => {
+    // Set the amount of book #4 in stock to 2
+    const sampleState = getDefaultState();
+    sampleState.inventory[4] = 2;
+
+    // Test that the sample store has its state equal to sampleState
+    const sampleStore = new BasicStore(sampleState, getTestActions());
+    expect(sampleStore.select((s) => s)).toStrictEqual(sampleState);
+
+    // Attempt to remove 10 copies of book #4 from stock when there are only 2 available.
+    // This should throw an error, and the state should be untouched.
+    const { removeStock } = sampleStore.actions;
+    const tran = await sampleStore.dispatch(
+      removeStock({ bookId: 4, amount: 10 })
+    );
+
+    expect(tran.success).toBeFalsy();
+    expect(tran.errors.length).toBeGreaterThan(0);
+    expect(tran.result).toStrictEqual(sampleState);
+    expect(sampleStore.select((s) => s)).toStrictEqual(sampleState);
+  });
 
   it("does not allow updating the state by changing selected state", () => {
     expect(store.select((s) => s)).toStrictEqual(getDefaultState());

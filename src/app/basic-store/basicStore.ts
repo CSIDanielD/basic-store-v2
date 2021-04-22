@@ -150,11 +150,20 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
     const inverseChanges: Patch[] = [];
     const errors: Error[] = [];
 
-    const reducerPromise = this._createReducerPromise(action, (ex) =>
-      errors.push(ex)
-    );
+    const reducerPromise = this._createReducerPromise(action);
 
-    const actionResult = await reducerPromise;
+    let actionResult: Draft<State>;
+
+    try {
+      actionResult = await reducerPromise;
+    } catch (ex) {
+      // Keep track of this error.
+      errors.push(ex);
+
+      // Return a draft of the original state
+      actionResult = this._createReducerArgs(action).stateFn();
+    }
+
     const resultState = finishDraft(actionResult, (patches, inversePatches) => {
       changes.push(...patches);
       inverseChanges.push(...inversePatches);
@@ -171,10 +180,7 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
     return transaction;
   }
 
-  private _createReducerPromise<A extends ActionLike>(
-    action: A,
-    errorHandler: (ex: Error) => void
-  ) {
+  private _createReducerPromise<A extends ActionLike>(action: A) {
     const { reducer, stateFn, actionDispatch } = this._createReducerArgs(
       action
     );
@@ -190,7 +196,6 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
             );
             return resolve(result);
           } catch (ex) {
-            errorHandler(ex);
             return reject(ex);
           }
         } else {
@@ -203,7 +208,6 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
             const result = await reducerWithoutPayload(stateFn, actionDispatch);
             return resolve(result);
           } catch (ex) {
-            errorHandler(ex);
             return reject(ex);
           }
         }
