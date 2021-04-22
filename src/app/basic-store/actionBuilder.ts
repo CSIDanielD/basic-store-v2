@@ -3,6 +3,7 @@ import { ActionReducerLike } from "./actionReducer";
 import {
   ReducerLike,
   ReducerMap,
+  ReducerMapLike,
   ReducerWithoutPayloadWithDispatch,
   ReducerWithPayloadWithDispatch
 } from "./reducer";
@@ -13,7 +14,10 @@ import {
   InferPayloadFromReducer
 } from "./utilityTypes";
 
-export class ActionBuilder<State = any, Reducers = any> {
+export class ActionBuilder<
+  State = any,
+  Reducers extends ReducerMapLike = ReducerMapLike
+> {
   withState<NewState>() {
     return new ActionBuilder<State & NewState, Reducers>();
   }
