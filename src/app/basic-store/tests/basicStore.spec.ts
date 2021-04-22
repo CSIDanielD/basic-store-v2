@@ -1,14 +1,103 @@
+import { enablePatches } from "immer";
 import { BasicStore } from "../basicStore";
-import { defaultState } from "./setup";
+import { getTestActions } from "./actions";
+import { getDefaultState, Inventory } from "./setup";
 
-describe("Basic store", () => {
-  let store = new BasicStore(defaultState, {});
+enablePatches();
+
+describe("State selection", () => {
+  let store = new BasicStore(getDefaultState(), getTestActions());
 
   beforeEach(() => {
-    store = new BasicStore(defaultState, {});
+    store = new BasicStore(getDefaultState(), getTestActions());
   });
 
-  it("Has initial state", () => {
-    expect(store.select((s) => s)).toBeDefined();
+  it("can select the whole state", () => {
+    const state = store.select((s) => s);
+
+    const alteredDefault = getDefaultState();
+    alteredDefault.customers.push({ id: 20, name: "Jim" });
+
+    expect(state).toStrictEqual(getDefaultState());
+    expect(state).not.toStrictEqual(alteredDefault);
+  });
+
+  it("can select a single state property", () => {
+    const books = store.select((s) => s.books);
+
+    const alteredDefault = getDefaultState();
+    alteredDefault.books.push({ id: 20, title: "Fake book", price: 100 });
+
+    expect(books).toStrictEqual(getDefaultState().books);
+    expect(books).not.toStrictEqual(alteredDefault);
+  });
+
+  it("can select a combination of state properties", () => {
+    const props = store.select((s) => {
+      return { customers: s.customers, purchases: s.purchases };
+    });
+
+    const defaultState = getDefaultState();
+    expect(props).toStrictEqual({
+      customers: defaultState.customers,
+      purchases: defaultState.purchases
+    });
+
+    const alteredDefault = getDefaultState();
+    alteredDefault.customers.push({ id: 123, name: "Customer" });
+    alteredDefault.purchases[123] = { 5: 10 };
+    const alteredProps = {
+      customers: alteredDefault.customers,
+      purchases: alteredDefault.purchases
+    };
+
+    expect(props).not.toStrictEqual(alteredProps);
+  });
+
+  it("can select an observable of the whole state");
+  it("can select an observable of a single state property");
+  it("can select an observable of a combination of state properties");
+});
+
+describe("Dispatching actions", () => {
+  beforeEach(() => {});
+
+  it("can dispatch an action");
+
+  it("doesn't allow unregistered actions");
+
+  it("can handle reducer errors");
+
+  it("can listen for actions of a particular type");
+});
+
+describe("Updating state", () => {
+  let store = new BasicStore(getDefaultState(), getTestActions());
+
+  beforeEach(() => {
+    store = new BasicStore(getDefaultState(), getTestActions());
+  });
+
+  it("updates the state when an action is dispatched", async () => {
+    expect(store.select((s) => s)).toStrictEqual(getDefaultState());
+
+    const { addBook } = store.actions;
+    await store.dispatch(addBook({ id: 123, title: "Test Book", price: 10 }));
+
+    expect(store.select((s) => s)).not.toStrictEqual(getDefaultState());
+  });
+
+  it("does not update state when reducer errors", async () => {});
+
+  it("does not allow updating the state by changing selected state", () => {
+    expect(store.select((s) => s)).toStrictEqual(getDefaultState());
+
+    const state = store.select((s) => s);
+    (state.inventory as Inventory)[10] = 5; // Attempt to assign a value by circumventing Immutable type.
+
+    expect(store.select((s) => s)).not.toStrictEqual(state);
+    expect(store.select((s) => s)).toStrictEqual(getDefaultState());
   });
 });
+
+describe("Change detection", () => {});

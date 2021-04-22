@@ -6,6 +6,7 @@ import {
   Immutable,
   Patch
 } from "immer";
+import * as rfdc from "rfdc";
 import { BehaviorSubject, ReplaySubject } from "rxjs";
 import { filter, map } from "rxjs/operators";
 import { ActionLike } from "./action";
@@ -20,6 +21,15 @@ import {
   InferActionReducerMapFromReducerMap,
   isPayloadAction
 } from "./utilityTypes";
+
+/**
+ * With these settings, `clone` won't copy prototype properties and
+ * will throw if the state has circular references (it shouldn't).
+ * Should we need the ability to track circular references, set `circles`
+ * to `true`.
+ */
+
+const clone = rfdc({ circles: false, proto: false });
 
 export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
   protected _state$: BehaviorSubject<Immutable<State>>;
@@ -69,7 +79,7 @@ export class BasicStore<State, Reducers extends ReducerMap<any, any, any>> {
    * @param selector The selector that will be called with the current state value.
    */
   select<T>(selector: Selector<Immutable<State>, T>) {
-    return selector(this._state$.value);
+    return clone(selector(this._state$.value)); // Return a clone of the selected state
   }
 
   /**
